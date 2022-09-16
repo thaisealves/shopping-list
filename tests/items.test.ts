@@ -32,32 +32,31 @@ describe("Testa POST /items ", () => {
 
 describe("Testa GET /items ", () => {
   it("Deve retornar status 200 e o body no formato de Array", async () => {
+    const item = itemFactory();
+
+    await supertest(app).post(`/items`).send(item);
     const result = await supertest(app).get(`/items`);
     expect(result.body).toBeInstanceOf(Array);
     expect(result.status).toBe(200);
+    expect(result.body.length).toBeGreaterThan(0);
   });
 });
 
 describe("Testa GET /items/:id ", () => {
   it("Deve retornar status 200 e um objeto igual a o item cadastrado", async () => {
     const item = itemFactory();
-    await supertest(app).post(`/items`).send(item);
+    const { body: newItem } = await supertest(app).post(`/items`).send(item);
     const getAll = await supertest(app).get(`/items`);
     const result = await supertest(app).get(`/items/${getAll.body[0].id}`);
-    expect(result.body).toBeInstanceOf(Object);
+    expect(newItem).toMatchObject(result.body);
     expect(result.status).toBe(200);
   });
-  
-  it(
-    "Deve retornar status 404 caso não exista um item com esse id",
-    async () => {
-      const item = itemFactory();
-      await supertest(app).post(`/items`).send(item);
-      const getAll = await supertest(app).get(`/items`);
-      const result = await supertest(app).get(
-        `/items/${getAll.body[0].id - 1}`
-      );
-      expect(result.status).toBe(404);
-    }
-  );
+
+  it("Deve retornar status 404 caso não exista um item com esse id", async () => {
+    const item = itemFactory();
+    await supertest(app).post(`/items`).send(item);
+    const getAll = await supertest(app).get(`/items`);
+    const result = await supertest(app).get(`/items/${getAll.body[0].id - 1}`);
+    expect(result.status).toBe(404);
+  });
 });
